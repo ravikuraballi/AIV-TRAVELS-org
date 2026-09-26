@@ -48,9 +48,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="space-y-20 pb-16">
+    <div className="space-y-12 sm:space-y-20 pb-20 sm:pb-16">
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[620px] lg:min-h-[680px] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] flex items-center justify-center overflow-hidden">
         {/* Background Image with Measured Contrast Scrim */}
         <div className="absolute inset-0 z-0">
           <img
@@ -62,36 +62,36 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center text-white space-y-8">
-          <div className="space-y-4 max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight font-display text-white" style={{ textWrap: 'balance' }}>
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-16 text-center text-white space-y-5 sm:space-y-8">
+          <div className="space-y-2 sm:space-y-4 max-w-3xl mx-auto">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight font-display text-white" style={{ textWrap: 'balance' }}>
               Your Journey, Our Responsibility.
             </h1>
-            <p className="text-sm sm:text-lg text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto" style={{ textWrap: 'balance' }}>
+            <p className="text-xs sm:text-base text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto" style={{ textWrap: 'balance' }}>
               Book reliable travel services, comfortable rides, and personalized trips with {business.name}. Transparent per-km rates, punctual chauffeurs, and round-the-clock assistance.
             </p>
           </div>
 
           {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
             <button
               onClick={() => onOpenBooking('oneway')}
-              className="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-amber-500/20 flex items-center gap-2 transform active:scale-95"
+              className="px-4 py-2.5 sm:px-6 sm:py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-amber-500/20 flex items-center gap-1.5 sm:gap-2 transform active:scale-95"
             >
               <span>Book Your Ride</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={() => onSelectTab('packages')}
-              className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs tracking-wider rounded-xl transition-all border border-white/20 backdrop-blur-xs flex items-center gap-2"
+              className="px-4 py-2.5 sm:px-6 sm:py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs tracking-wider rounded-xl transition-all border border-white/20 backdrop-blur-xs flex items-center gap-1.5 sm:gap-2"
             >
-              <span>Explore Travel Packages</span>
-              <Compass className="w-4 h-4 text-amber-400" />
+              <span>Explore Tour Packages</span>
+              <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
             </button>
           </div>
 
           {/* Quick Booking Form Card on Hero */}
-          <div className="max-w-4xl mx-auto bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-2xl text-left border border-white/40">
+          <div className="max-w-4xl mx-auto bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-2xl text-left border border-white/40">
             {/* Trip Type Segmented Tabs */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl mb-4 text-xs font-semibold overflow-x-auto">
               <button

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="36" fill="#0f172a"/>
+  <circle cx="96" cy="96" r="76" stroke="#f59e0b" stroke-width="4" stroke-opacity="0.3" fill="none"/>
+  <!-- Gold Stylized Cab / Monogram Icon -->
+  <path d="M50 118 L64 74 C66 68 72 64 79 64 L113 64 C120 64 126 68 128 74 L142 118" fill="none" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="42" y="114" width="108" height="24" rx="10" fill="#f59e0b"/>
+  <circle cx="68" cy="138" r="10" fill="#0f172a" stroke="#f59e0b" stroke-width="4"/>
+  <circle cx="124" cy="138" r="10" fill="#0f172a" stroke="#f59e0b" stroke-width="4"/>
+  <text x="96" y="104" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#f59e0b" text-anchor="middle">AIV</text>
+</svg>

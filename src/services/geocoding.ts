@@ -129,8 +129,140 @@ export const VERIFIED_LOCATIONS: Record<string, { lat: number; lng: number; cate
 // In-memory cache for online geocoded results
 const geocodeCache = new Map<string, LocationSuggestion[]>();
 
+// Kannada Place Names & Landmark Translations
+export const KANNADA_TRANSLATIONS: Record<string, string> = {
+  // Hubs & Airports
+  'kempegowda international airport': 'ಕೆಂಪೇಗೌಡ ಅಂತರರಾಷ್ಟ್ರೀಯ ವಿಮಾನ ನಿಲ್ದಾಣ (BLR)',
+  'blr airport': 'ಕೆಂಪೇಗೌಡ ವಿಮಾನ ನಿಲ್ದಾಣ (BLR)',
+  'bangalore airport': 'ಕೆಂಪೇಗೌಡ ಅಂತರರಾಷ್ಟ್ರೀಯ ವಿಮಾನ ನಿಲ್ದಾಣ',
+  'airport': 'ವಿಮಾನ ನಿಲ್ದಾಣ',
+  'majestic': 'ಮೆಜೆಸ್ಟಿಕ್ / ಕೆ.ಎಸ್.ಆರ್ ಬೆಂಗಳೂರು',
+  'ksr bengaluru': 'ಕೆ.ಎಸ್.ಆರ್ ಬೆಂಗಳೂರು ರೈಲ್ವೆ ನಿಲ್ದಾಣ',
+  'yeshwanthpur': 'ಯಶವಂತಪುರ ರೈಲ್ವೆ ನಿಲ್ದಾಣ',
+  'cantonment': 'ಬೆಂಗಳೂರು ಕಂಟೋನ್ಮೆಂಟ್',
+  'smvt': 'ಎಸ್.ಎಂ.ವಿ.ಟಿ ಟರ್ಮಿನಲ್',
+  'shantinagar': 'ಶಾಂತಿನಗರ ಬಸ್ ನಿಲ್ದಾಣ',
+
+  // Bengaluru Localities
+  'indiranagar': 'ಇಂದಿರಾನಗರ',
+  'koramangala': 'ಕೋರಮಂಗಲ',
+  'electronic city': 'ಎಲೆಕ್ಟ್ರಾನಿಕ್ ಸಿಟಿ',
+  'whitefield': 'ವೈಟ್‌ಫೀಲ್ಡ್',
+  'hsr layout': 'ಎಚ್.ಎಸ್.ಆರ್ ಬಡಾವಣೆ',
+  'btm layout': 'ಬಿ.ಟಿ.ಎಂ ಬಡಾವಣೆ',
+  'jayanagar': 'ಜಯನಗರ',
+  'jp nagar': 'ಜೆ.ಪಿ ನಗರ',
+  'banashankari': 'ಬನಶಂಕರಿ',
+  'bellandur': 'ಬೆಳ್ಳಂದೂರು',
+  'marathahalli': 'ಮಾರತ್‌ಹಳ್ಳಿ',
+  'sarjapur': 'ಸರ್ಜಾಪುರ',
+  'hebbal': 'ಹೆಬ್ಬಾಳ',
+  'manyata tech park': 'ಮಾನ್ಯತಾ ಟೆಕ್ ಪಾರ್ಕ್',
+  'manyata': 'ಮಾನ್ಯತಾ ಟೆಕ್ ಪಾರ್ಕ್',
+  'yelahanka': 'ಯಲಹಂಕ',
+  'mg road': 'ಎಂ.ಜಿ ರಸ್ತೆ',
+  'commercial street': 'ಕಮರ್ಷಿಯಲ್ ಸ್ಟ್ರೀಟ್',
+  'malleshwaram': 'ಮಲ್ಲೇಶ್ವರಂ',
+  'rajajinagar': 'ರಾಜಾಜಿನಗರ',
+  'kengeri': 'ಕೆಂಗೇರಿ',
+  'vijayanagar': 'ವಿಜಯನಗರ',
+  'basavanagudi': 'ಬಸವನಗುಡಿ',
+  'bannerghatta': 'ಬನ್ನೇರುಘಟ್ಟ',
+  'kanakapura': 'ಕನಕಪುರ',
+  'devanahalli': 'ದೇವನಹಳ್ಳಿ',
+  'hoskote': 'ಹೊಸಕೋಟೆ',
+  'bidadi': 'ಬಿದದಿ',
+  'nelamangala': 'ನೆಲಮಂಗಲ',
+
+  // Karnataka Cities & Tour Spots
+  'bengaluru': 'ಬೆಂಗಳೂರು',
+  'bangalore': 'ಬೆಂಗಳೂರು',
+  'mysore': 'ಮೈಸೂರು',
+  'mysuru': 'ಮೈಸೂರು ಅರಮನೆ ನಗರಿ',
+  'nanjangud': 'ನಂಜನಗೂಡು ಶ್ರೀಕಂಠೇಶ್ವರ',
+  'srirangapatna': 'ಶ್ರೀರಂಗಪಟ್ಟಣ',
+  'mandya': 'ಮಂಡ್ಯ ಸಕ್ಕರೆ ನಾಡು',
+  'channapatna': 'ಚನ್ನಪಟ್ಟಣ ಗೊಂಬೆ ನಗರಿ',
+  'ramanagara': 'ರಾಮನಗರ',
+  'coorg': 'ಕೊಡಗು (ಮಡಿಕೇರಿ)',
+  'madikeri': 'ಮಡಿಕೇರಿ ಕೋಟೆ',
+  'kushalnagar': 'ಕುಶಾಲನಗರ ಗೋಲ್ಡನ್ ಟೆಂಪಲ್',
+  'talakaveri': 'ತಲಕಾವೇರಿ ಪವಿತ್ರ ತೀರ್ಥ',
+  'nagarhole': 'ನಾಗರಹೊಳೆ ಅಭಯಾರಣ್ಯ',
+  'bandipur': 'ಬಂಡೀಪುರ ಸಫಾರಿ',
+  'kabini': 'ಕಬಿನಿ ನದಿ ಸಫಾರಿ',
+  'chikmagalur': 'ಚಿಕ್ಕಮಗಳೂರು ಕಾಫಿ ನಾಡು',
+  'mullayanagiri': 'ಮುಳ್ಳಯ್ಯನಗಿರಿ ಶಿಖರ',
+  'kemmangundi': 'ಕೆಮ್ಮಣ್ಣುಗುಂಡಿ ಗಿರಿಧಾಮ',
+  'kudremukh': 'ಕುದುರೆಮುಖ',
+  'horanadu': 'ಹೊರನಾಡು ಅನ್ನಪೂರ್ಣೇಶ್ವರಿ',
+  'sringeri': 'ಶೃಂಗೇರಿ ಶಾರದಾ ಪೀಠ',
+  'hassan': 'ಹಾಸನ',
+  'sakleshpur': 'ಸಕಲೇಶಪುರ',
+  'belur': 'ಬೇಲೂರು ಚನ್ನಕೇಶವ',
+  'halebidu': 'ಹಳೇಬೀಡು ಹೊಯ್ಸಳೇಶ್ವರ',
+  'shravanabelagola': 'ಶ್ರವಣಬೆಳಗೊಳ ಗೊಮ್ಮಟೇಶ್ವರ',
+  'mangalore': 'ಮಂಗಳೂರು ಕರಾವಳಿ',
+  'mangaluru': 'ಮಂಗಳೂರು',
+  'udupi': 'ಉಡುಪಿ ಶ್ರೀ ಕೃಷ್ಣ ಮಠ',
+  'malpe': 'ಮಲ್ಪೆ ಬೀಚ್',
+  'manipal': 'ಮಣಿಪಾಲ',
+  'kollur': 'ಕೊಲ್ಲೂರು ಮೂಕಾಂಬಿಕಾ',
+  'murudeshwar': 'ಮುರುಡೇಶ್ವರ ಶಿವನ ದೇವಸ್ಥಾನ',
+  'gokarna': 'ಗೋಕರ್ಣ ಮಹಾಬಲೇಶ್ವರ',
+  'dandeli': 'ದಾಂಡೇಲಿ ರಾಫ್ಟಿಂಗ್',
+  'jog falls': 'ಜೋಗ ಜಲಪಾತ',
+  'shivamogga': 'ಶಿವಮೊಗ್ಗ',
+  'shimoga': 'ಶಿವಮೊಗ್ಗ',
+  'davanagere': 'ದಾವಣಗೆರೆ',
+  'hubli': 'ಹುಬ್ಬಳ್ಳಿ',
+  'hubballi': 'ಹುಬ್ಬಳ್ಳಿ ಜಂಕ್ಷನ್',
+  'dharwad': 'ಧಾರವಾಡ ಪೇಡಾ ನಗರಿ',
+  'belgaum': 'ಬೆಳಗಾವಿ',
+  'belagavi': 'ಬೆಳಗಾವಿ',
+  'hampi': 'ಹಂಪಿ ವಿಶ್ವ ಪರಂಪರೆ ತಾಣ',
+  'hospet': 'ಹೊಸಪೇಟೆ',
+  'ballari': 'ಬಳ್ಳಾರಿ',
+  'tumkur': 'ತುಮಕೂರು',
+  'tumakuru': 'ತುಮಕೂರು',
+  'kolar': 'ಕೋಲಾರ ಚಿನ್ನದ ನಾಡು',
+  'chikkaballapur': 'ಚಿಕ್ಕಬಳ್ಳಾಪುರ',
+  'nandi hills': 'ನಂದಿ ಬೆಟ್ಟ ಗಿರಿಧಾಮ',
+  'dharmasthala': 'ಶ್ರೀ ಕ್ಷೇತ್ರ ಧರ್ಮಸ್ಥಳ',
+  'kukke': 'ಕುಕ್ಕೆ ಶ್ರೀ ಸುಬ್ರಹ್ಮಣ್ಯ',
+  'tirupati': 'ತಿರುಪತಿ ಬಾಲಾಜಿ ದೇವಸ್ಥಾನ',
+  'tirumala': 'ತಿರುಮಲ ಬೆಟ್ಟ',
+  'ooty': 'ಊಟಿ ಗಿರಿಧಾಮ',
+  'coonoor': 'ಕೂನೂರು ಚಹಾ ತೋಟ',
+  'kodaikanal': 'ಕೊಡೈಕೆನಾಲ್',
+  'chennai': 'ಚೆನ್ನೈ',
+  'vellore': 'ವೇಲೂರು ಗೋಲ್ಡನ್ ಟೆಂಪಲ್',
+  'pondicherry': 'ಪುದುಚೇರಿ',
+  'puducherry': 'ಪುದುಚೇರಿ',
+  'wayanad': 'ವಯನಾಡ್',
+  'munnar': 'ಮುನ್ನಾರ್ ಗಿರಿಧಾಮ',
+  'kochi': 'ಕೊಚ್ಚಿ',
+  'calicut': 'ಕೋಝಿಕ್ಕೋಡ್',
+  'goa': 'ಗೋವಾ ಬೀಚ್',
+  'hyderabad': 'ಹೈದರಾಬಾದ್',
+};
+
 /**
- * Resolve coordinates for any user-provided string
+ * Translate any location string to Kannada
+ */
+export function translateToKannada(placeName: string): string {
+  if (!placeName) return '';
+  const lower = placeName.toLowerCase().trim();
+  for (const [enKey, knVal] of Object.entries(KANNADA_TRANSLATIONS)) {
+    if (lower.includes(enKey)) {
+      return knVal;
+    }
+  }
+  return placeName;
+}
+
+/**
+ * Resolve coordinates for any user-provided string (English or Kannada)
  */
 export function resolveCoordinates(
   locationStr: string,
@@ -138,6 +270,14 @@ export function resolveCoordinates(
 ): [number, number] {
   if (!locationStr || !locationStr.trim()) return fallback;
   const lower = locationStr.toLowerCase().trim();
+
+  // 0. If user typed in Kannada, check against Kannada dictionary
+  for (const [enKey, knVal] of Object.entries(KANNADA_TRANSLATIONS)) {
+    if (lower.includes(knVal) || knVal.includes(lower)) {
+      const match = VERIFIED_LOCATIONS[enKey];
+      if (match) return [match.lat, match.lng];
+    }
+  }
 
   // 1. Direct or partial match in verified database
   for (const [key, data] of Object.entries(VERIFIED_LOCATIONS)) {

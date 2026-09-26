@@ -54,13 +54,21 @@ export class TravelStore {
   // Business Profile
   static getBusinessProfile(): BusinessProfile {
     const profile = getStored<BusinessProfile>(STORAGE_KEYS.BUSINESS, defaultBusinessProfile);
+    let needsUpdate = false;
+    const updated: BusinessProfile = { ...profile };
+
     if (profile.phone !== '+91 84313 57721' || profile.alternatePhone) {
-      const updated: BusinessProfile = {
-        ...profile,
-        phone: '+91 84313 57721',
-        alternatePhone: undefined,
-        whatsapp: '918431357721',
-      };
+      updated.phone = '+91 84313 57721';
+      updated.alternatePhone = undefined;
+      updated.whatsapp = '918431357721';
+      needsUpdate = true;
+    }
+    if (!profile.email || profile.email === 'bookings@aivtravels.com') {
+      updated.email = 'ravikuraballi523@gmail.com';
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
       setStored(STORAGE_KEYS.BUSINESS, updated);
       return updated;
     }
@@ -157,7 +165,21 @@ export class TravelStore {
 
   // Bookings
   static getBookings(): Booking[] {
-    return getStored<Booking[]>(STORAGE_KEYS.BOOKINGS, defaultBookings);
+    const list = getStored<Booking[]>(STORAGE_KEYS.BOOKINGS, defaultBookings);
+    // Cure any stale demo booking in existing localStorage
+    let modified = false;
+    const cleaned = list.map(b => {
+      if (b.id === 'AIV-2026-1042' && b.status === 'Confirmed') {
+        modified = true;
+        return { ...b, status: 'Completed' as BookingStatus };
+      }
+      return b;
+    });
+    if (modified) {
+      setStored(STORAGE_KEYS.BOOKINGS, cleaned);
+      return cleaned;
+    }
+    return list;
   }
 
   static getBookingById(id: string): Booking | undefined {
@@ -179,21 +201,22 @@ export class TravelStore {
   // Vehicle Double Booking & Availability Check
   static checkVehicleAvailability(vehicleId: string, pickupDate: string, returnDate?: string): { available: boolean; conflictReason?: string } {
     const bookings = this.getBookings();
-    const targetStart = new Date(pickupDate).getTime();
-    const targetEnd = returnDate ? new Date(returnDate).getTime() : targetStart + 24 * 60 * 60 * 1000;
+    const pStart = pickupDate;
+    const pEnd = returnDate || pickupDate;
 
-    const activeStatuses: BookingStatus[] = ['Confirmed', 'Driver Assigned', 'In Progress'];
+    // Only active upcoming dispatches block assignment
+    const activeStatuses: BookingStatus[] = ['Driver Assigned', 'In Progress'];
 
     for (const b of bookings) {
       if (b.vehicleId === vehicleId && activeStatuses.includes(b.status)) {
-        const bStart = new Date(b.pickupDate).getTime();
-        const bEnd = b.returnDate ? new Date(b.returnDate).getTime() : bStart + 24 * 60 * 60 * 1000;
+        const bStart = b.pickupDate;
+        const bEnd = b.returnDate || b.pickupDate;
 
-        // Check date overlap
-        if (targetStart <= bEnd && targetEnd >= bStart) {
+        // Proper date overlap check
+        if (pStart <= bEnd && pEnd >= bStart) {
           return {
             available: false,
-            conflictReason: `Vehicle already assigned for trip #${b.id} from ${b.pickupDate} to ${b.returnDate || b.pickupDate}`,
+            conflictReason: `Vehicle has a confirmed dispatch on ${b.pickupDate}. Our team will allocate an equivalent cab from the fleet.`,
           };
         }
       }
@@ -204,11 +227,17 @@ export class TravelStore {
 
   // Create new booking with availability validation
   static createBooking(data: Omit<Booking, 'id' | 'createdAt' | 'updatedAt' | 'statusHistory'>): { success: boolean; booking?: Booking; error?: string } {
-    // If vehicleId specified, validate against double-booking
-    if (data.vehicleId) {
-      const avail = this.checkVehicleAvailability(data.vehicleId, data.pickupDate, data.returnDate);
+    let finalVehicleId = data.vehicleId;
+
+    // If specific vehicle has a conflict, check if alternative is available in same category
+    if (finalVehicleId) {
+      const avail = this.checkVehicleAvailability(finalVehicleId, data.pickupDate, data.returnDate);
       if (!avail.available) {
-        return { success: false, error: avail.conflictReason || 'Selected vehicle is unavailable for these dates.' };
+        const allVehicles = this.getVehicles();
+        const alt = allVehicles.find(v => v.category === data.vehiclePreference && v.id !== finalVehicleId && v.isAvailable);
+        if (alt) {
+          finalVehicleId = alt.id;
+        }
       }
     }
 
@@ -219,6 +248,7 @@ export class TravelStore {
 
     const newBooking: Booking = {
       ...data,
+      vehicleId: finalVehicleId,
       id: newId,
       status: 'Pending', // All new web bookings start as Pending for dispatch verification
       statusHistory: [

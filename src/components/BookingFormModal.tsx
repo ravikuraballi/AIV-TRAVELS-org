@@ -15,7 +15,12 @@ import {
   Share2,
   FileText,
   Map as MapIcon,
-  Database
+  Database,
+  Mail,
+  MessageSquare,
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 import { TripType, Vehicle, Booking } from '../types/travel';
 import { TravelStore } from '../services/storage';
@@ -23,6 +28,12 @@ import { RouteMap } from './RouteMap';
 import { LocationInput } from './LocationInput';
 import { calculateTripDistance } from '../services/geocoding';
 import { SUPABASE_PROJECT_ID } from '../services/supabase';
+import { 
+  dispatchBookingNotifications, 
+  getAdminWhatsAppUrl, 
+  getAdminEmailMailtoUrl, 
+  formatAdminWhatsAppMessage 
+} from '../services/notificationService';
 
 interface BookingFormModalProps {
   isOpen: boolean;
@@ -86,6 +97,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
   const [showMap, setShowMap] = useState<boolean>(true);
+  const [isKannada, setIsKannada] = useState<boolean>(true);
+  const [notificationDispatched, setNotificationDispatched] = useState<boolean>(false);
+  const [copiedSummary, setCopiedSummary] = useState<boolean>(false);
 
   const vehicles = TravelStore.getVehicles().filter(v => v.isAvailable);
   const pricingRules = TravelStore.getPricingRules();
@@ -145,7 +159,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
       return;
     }
 
-    // Check vehicle availability
+    // Non-blocking vehicle availability verification
     if (selectedVehicle) {
       const avail = TravelStore.checkVehicleAvailability(
         selectedVehicle.id,
@@ -153,8 +167,11 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
         tripType === 'roundtrip' ? returnDate : undefined
       );
       if (!avail.available) {
-        setErrorMsg(avail.conflictReason || 'This vehicle is reserved on your chosen dates. Please pick another vehicle.');
-        return;
+        // Auto-assign alternative vehicle of same category if available
+        const alt = vehicles.find(v => v.category === selectedVehicle.category && v.id !== selectedVehicle.id && v.isAvailable);
+        if (alt) {
+          setSelectedVehicleId(alt.id);
+        }
       }
     }
 
@@ -242,31 +259,41 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div>
-            <h3 className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-2">
-              <span>Book Your Trip</span>
+            <h3 className="text-base sm:text-lg font-bold font-display tracking-tight text-white flex items-center gap-2">
+              <span>{isKannada ? 'ಕ್ಯಾಬ್ ಬುಕಿಂಗ್ ಮಾಡಿ' : 'Book Your Trip'}</span>
               <span className="text-xs font-normal text-amber-400 font-sans">· {business.name}</span>
             </h3>
-            <p className="text-xs text-slate-400">
-              {step === 1 && 'Step 1 of 2: Trip route & vehicle selection'}
-              {step === 2 && 'Step 2 of 2: Review fare & contact details'}
-              {step === 3 && 'Booking Request Received'}
+            <p className="text-[11px] sm:text-xs text-slate-400">
+              {step === 1 && (isKannada ? 'ಹಂತ 1: ಮಾರ್ಗ ಮತ್ತು ವಾಹನ ಆಯ್ಕೆ' : 'Step 1 of 2: Trip route & vehicle selection')}
+              {step === 2 && (isKannada ? 'ಹಂತ 2: ದರ ಪರಿಶೀಲನೆ ಮತ್ತು ದೃಢೀಕರಣ' : 'Step 2 of 2: Review fare & contact details')}
+              {step === 3 && (isKannada ? 'ಬುಕಿಂಗ್ ವಿನಂತಿ ಯಶಸ್ವಿಯಾಗಿದೆ' : 'Booking Request Received')}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsKannada(!isKannada)}
+              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+              title="ಕನ್ನಡ / English ಭಾಷೆ ಬದಲಿಸಿ"
+            >
+              <span>{isKannada ? 'English' : 'ಕನ್ನಡ'}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6">
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-xs text-red-700">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
@@ -279,7 +306,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
             <form onSubmit={handleNextToReview} className="space-y-5">
               {/* Trip Type Selector */}
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-2">Trip Category</label>
+                <label className="block text-xs font-medium text-slate-700 mb-2">
+                  {isKannada ? 'ಪ್ರಯಾಣದ ವಿಧಾನ (Trip Category)' : 'Trip Category'}
+                </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-lg text-xs font-medium">
                   {(['oneway', 'roundtrip', 'airport', 'local'] as TripType[]).map((t) => (
                     <button
@@ -292,10 +321,10 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      {t === 'oneway' && 'One Way'}
-                      {t === 'roundtrip' && 'Round Trip'}
-                      {t === 'airport' && 'Airport'}
-                      {t === 'local' && 'Local Hourly'}
+                      {t === 'oneway' && (isKannada ? 'ಒನ್-ವೇ' : 'One Way')}
+                      {t === 'roundtrip' && (isKannada ? 'ರೌಂಡ್ ಟ್ರಿಪ್' : 'Round Trip')}
+                      {t === 'airport' && (isKannada ? 'ವಿಮಾನ ನಿಲ್ದಾಣ' : 'Airport')}
+                      {t === 'local' && (isKannada ? 'ಸ್ಥಳೀಯ ಬಾಡಿಗೆ' : 'Local Hourly')}
                     </button>
                   ))}
                 </div>
@@ -363,22 +392,22 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
               {/* Locations */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <LocationInput
-                  label="Pickup Location *"
+                  label={isKannada ? 'ಪ್ರಾರಂಭದ ಸ್ಥಳ (Pickup Location) *' : 'Pickup Location *'}
                   required
                   value={pickupLocation}
                   onChange={(val) => setPickupLocation(val)}
-                  placeholder="Search airport, hotel, metro or address..."
+                  placeholder={isKannada ? 'ವಿಮಾನ ನಿಲ್ದಾಣ, ಹೋಟೆಲ್, ಬಡಾವಣೆ ಅಥವಾ ವಿಳಾಸ...' : 'Search airport, hotel, metro or address...'}
                   pinColor="emerald"
                   showCurrentLocationBtn={true}
                 />
 
                 {tripType !== 'local' && (
                   <LocationInput
-                    label="Drop-off Destination *"
+                    label={isKannada ? 'ತಲುಪುವ ಸ್ಥಳ (Drop Destination) *' : 'Drop-off Destination *'}
                     required
                     value={dropLocation}
                     onChange={(val) => setDropLocation(val)}
-                    placeholder="Search city, town, airport or hotel..."
+                    placeholder={isKannada ? 'ತಲುಪುವ ಊರು, ನಗರ ಅಥವಾ ವಿಳಾಸ...' : 'Search city, town, airport or hotel...'}
                     pinColor="red"
                     showCurrentLocationBtn={false}
                   />
@@ -390,14 +419,16 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                     <MapIcon className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Route & Transit Map</span>
+                    <span>{isKannada ? 'ಲೈವ್ ಮಾರ್ಗ ನಕ್ಷೆ (Live Route Map)' : 'Route & Transit Map'}</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowMap(!showMap)}
                     className="text-xs text-amber-600 hover:text-amber-700 font-medium"
                   >
-                    {showMap ? 'Hide Map' : 'View Route on Map'}
+                    {showMap 
+                      ? (isKannada ? 'ನಕ್ಷೆ ಮುಚ್ಚಿ' : 'Hide Map') 
+                      : (isKannada ? 'ನಕ್ಷೆ ವೀಕ್ಷಿಸಿ' : 'View Route on Map')}
                   </button>
                 </div>
                 {showMap && (
@@ -417,7 +448,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
               {/* Date & Time */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Pickup Date *</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    {isKannada ? 'ಪ್ರಯಾಣದ ದಿನಾಂಕ (Date) *' : 'Pickup Date *'}
+                  </label>
                   <div className="relative">
                     <Calendar className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                     <input
@@ -431,7 +464,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Pickup Time *</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    {isKannada ? 'ಸಮಯ (Time) *' : 'Pickup Time *'}
+                  </label>
                   <div className="relative">
                     <Clock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                     <input
@@ -446,7 +481,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
 
                 {tripType === 'roundtrip' && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Return Date *</label>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      {isKannada ? 'ಹಿಂತಿರುಗುವ ದಿನಾಂಕ *' : 'Return Date *'}
+                    </label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                       <input
@@ -550,7 +587,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   type="submit"
                   className="px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-colors flex items-center gap-1.5"
                 >
-                  <span>Review Details</span>
+                  <span>{isKannada ? 'ಮುಂದೆ ಹೋಗಿ (ದರ ಪರಿಶೀಲಿಸಿ)' : 'Review Details'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -563,31 +600,33 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
               {/* Trip Summary Card */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Trip Summary</span>
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    {isKannada ? 'ಪ್ರಯಾಣದ ಸಾರಾಂಶ (Trip Summary)' : 'Trip Summary'}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setStep(1)}
                     className="text-xs text-amber-600 hover:text-amber-700 font-medium"
                   >
-                    Edit Route
+                    {isKannada ? 'ಮಾರ್ಗ ಬದಲಿಸಿ (Edit)' : 'Edit Route'}
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-y-2 text-xs text-slate-600">
                   <div>
-                    <span className="text-slate-400 block">Pickup</span>
-                    <span className="font-medium text-slate-900">{pickupLocation}</span>
+                    <span className="text-slate-400 block text-[11px]">{isKannada ? 'ಪ್ರಾರಂಭದ ಸ್ಥಳ' : 'Pickup'}</span>
+                    <span className="font-semibold text-slate-800">{pickupLocation}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Drop</span>
-                    <span className="font-medium text-slate-900">{dropLocation || 'Local Rental'}</span>
+                    <span className="text-slate-400 block text-[11px]">{isKannada ? 'ತಲುಪುವ ಸ್ಥಳ' : 'Drop'}</span>
+                    <span className="font-semibold text-slate-800">{dropLocation || 'Local Rental'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Schedule</span>
-                    <span className="font-medium text-slate-900">{pickupDate} at {pickupTime}</span>
+                    <span className="text-slate-400 block text-[11px]">{isKannada ? 'ದಿನಾಂಕ & ಸಮಯ' : 'Schedule'}</span>
+                    <span className="font-semibold text-slate-800">{pickupDate} at {pickupTime}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Vehicle</span>
-                    <span className="font-medium text-slate-900">{selectedVehicle?.name} ({selectedVehicle?.category})</span>
+                    <span className="text-slate-400 block text-[11px]">{isKannada ? 'ವಾಹನ' : 'Vehicle'}</span>
+                    <span className="font-semibold text-slate-800">{selectedVehicle?.name} ({selectedVehicle?.category})</span>
                   </div>
                 </div>
 
@@ -635,14 +674,16 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
               {/* Customer Contact Details */}
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-                  Passenger Contact Information
+                  {isKannada ? 'ಪ್ರಯಾಣಿಕರ ಸಂಪರ್ಕ ಮಾಹಿತಿ (Contact Details)' : 'Passenger Contact Information'}
                 </h4>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Full Name *</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    {isKannada ? 'ಗ್ರಾಹಕರ ಪೂರ್ಣ ಹೆಸರು *' : 'Full Name *'}
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ramesh Kumar"
+                    placeholder={isKannada ? 'ಉದಾಹರಣೆಗೆ: ರಮೇಶ್ ಕುಮಾರ್' : 'e.g. Ramesh Kumar'}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
@@ -650,7 +691,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Mobile Phone (WhatsApp Enabled) *</label>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      {isKannada ? 'ಮೊಬೈಲ್ ಸಂಖ್ಯೆ (WhatsApp) *' : 'Mobile Phone (WhatsApp Enabled) *'}
+                    </label>
                     <input
                       type="tel"
                       required
@@ -661,7 +704,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Email Address (Optional)</label>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      {isKannada ? 'ಇಮೇಲ್ ವಿಳಾಸ (ಐಚ್ಛಿಕ)' : 'Email Address (Optional)'}
+                    </label>
                     <input
                       type="email"
                       placeholder="e.g. ramesh@example.com"
@@ -672,10 +717,12 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Trip Instructions / Special Requests</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    {isKannada ? 'ಹೆಚ್ಚುವರಿ ಸೂಚನೆಗಳು (ಐಚ್ಛಿಕ)' : 'Trip Instructions / Special Requests'}
+                  </label>
                   <textarea
                     rows={2}
-                    placeholder="e.g. Please bring vehicle with child seat / extra boot space / senior passenger on board"
+                    placeholder={isKannada ? 'ಉದಾಹರಣೆಗೆ: ಹೆಚ್ಚು ಲಗೇಜ್ ಇದೆ / ಹಿರಿಯ ನಾಗರಿಕರು ಇದ್ದಾರೆ...' : 'e.g. Please bring vehicle with child seat / extra boot space / senior passenger on board'}
                     value={specialInstructions}
                     onChange={(e) => setSpecialInstructions(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
@@ -690,7 +737,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   onClick={() => setStep(1)}
                   className="px-4 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors"
                 >
-                  Back
+                  {isKannada ? 'ಹಿಂದಕ್ಕೆ (Back)' : 'Back'}
                 </button>
                 <button
                   type="submit"
@@ -698,10 +745,10 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   className="px-6 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors flex items-center gap-2 shadow-xs"
                 >
                   {isSubmitting ? (
-                    <span>Submitting Request...</span>
+                    <span>{isKannada ? 'ಬುಕಿಂಗ್ ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...' : 'Submitting Request...'}</span>
                   ) : (
                     <>
-                      <span>Confirm & Send Booking Request</span>
+                      <span>{isKannada ? 'ಬುಕಿಂಗ್ ದೃಢೀಕರಿಸಿ (ವಿನಂತಿ ಕಳುಹಿಸಿ)' : 'Confirm & Send Booking Request'}</span>
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     </>
                   )}
@@ -719,44 +766,46 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
 
               <div>
                 <h3 className="text-xl font-bold font-display text-slate-900">
-                  Booking Request Received!
+                  {isKannada ? 'ಬುಕಿಂಗ್ ವಿನಂತಿ ಯಶಸ್ವಿಯಾಗಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ!' : 'Booking Request Received!'}
                 </h3>
                 <p className="text-xs text-slate-600 mt-1 max-w-md mx-auto">
-                  Your trip has been safely registered in the AIV Travels reservation system. Our dispatch team is reviewing vehicle allocation and will confirm promptly.
+                  {isKannada 
+                    ? 'ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಪ್ರಯಾಣದ ವಿನಂತಿಯನ್ನು ನೋಂದಾಯಿಸಲಾಗಿದೆ. ನಮ್ಮ ಕಂಟ್ರೋಲ್ ರೂಮ್‌ನಿಂದ ನಿಮ್ಮನ್ನು ಶೀಘ್ರದಲ್ಲೇ ಸಂಪರ್ಕಿಸಿ ಚಾಲಕ ಹಾಗೂ ವಾಹನ ವಿವರ ಕಳುಹಿಸಲಾಗುವುದು.'
+                    : 'Your trip has been safely registered in the AIV Travels reservation system. Our dispatch team is reviewing vehicle allocation and will confirm promptly.'}
                 </p>
               </div>
 
               {/* Reference Card */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-left space-y-2 max-w-md mx-auto">
                 <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                  <span className="text-xs text-slate-500">Booking Reference</span>
+                  <span className="text-xs text-slate-500">{isKannada ? 'ಬುಕಿಂಗ್ ಸಂಖ್ಯೆ:' : 'Booking Reference'}</span>
                   <span className="text-sm font-bold font-mono text-slate-900 tracking-wider">
                     {confirmedBooking.id}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Customer</span>
+                  <span className="text-slate-500">{isKannada ? 'ಗ್ರಾಹಕರು:' : 'Customer'}</span>
                   <span className="font-medium text-slate-800">{confirmedBooking.customerName}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Date & Pickup</span>
+                  <span className="text-slate-500">{isKannada ? 'ದಿನಾಂಕ & ಸಮಯ:' : 'Date & Pickup'}</span>
                   <span className="font-medium text-slate-800">{confirmedBooking.pickupDate} ({confirmedBooking.pickupTime})</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Route</span>
+                  <span className="text-slate-500">{isKannada ? 'ಮಾರ್ಗ:' : 'Route'}</span>
                   <span className="font-medium text-slate-800 truncate max-w-[200px]">{confirmedBooking.pickupLocation} → {confirmedBooking.dropLocation}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Initial Status</span>
-                  <span className="text-amber-700 font-semibold">Pending Confirmation</span>
+                  <span className="text-slate-500">{isKannada ? 'ಸ್ಥಿತಿ:' : 'Initial Status'}</span>
+                  <span className="text-amber-700 font-semibold">{isKannada ? 'ಖಚಿತತೆಗೆ ಬಾಕಿ (Pending)' : 'Pending Confirmation'}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-200">
-                  <span className="text-slate-700 font-semibold">Total Estimated Fare</span>
+                  <span className="text-slate-700 font-semibold">{isKannada ? 'ಒಟ್ಟು ಅಂದಾಜು ದರ:' : 'Total Estimated Fare'}</span>
                   <span className="text-sm font-bold text-amber-600 font-mono">₹{confirmedBooking.totalFare}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md mt-2">
                   <Database className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Synced to Supabase database (Project: <code className="font-mono text-emerald-900">{SUPABASE_PROJECT_ID}</code>)</span>
+                  <span>{isKannada ? 'ಸುರಕ್ಷಿತ ಡೇಟಾಬೇಸ್‌ನಲ್ಲಿ ಸಂಗ್ರಹಿಸಲಾಗಿದೆ' : 'Synced to Supabase database'}</span>
                 </div>
               </div>
 
@@ -769,7 +818,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition-colors"
                 >
                   <Share2 className="w-3.5 h-3.5" />
-                  Send to AIV Travels WhatsApp
+                  <span>{isKannada ? 'WhatsApp ಗೆ ಕಳುಹಿಸಿ' : 'Send to AIV Travels WhatsApp'}</span>
                 </a>
                 <button
                   type="button"
@@ -778,7 +827,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   }}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium text-xs transition-colors"
                 >
-                  Done
+                  {isKannada ? 'ಮುಕ್ತಾಯ (Done)' : 'Done'}
                 </button>
               </div>
             </div>

@@ -9,6 +9,8 @@ import { VerificationNotice } from './components/VerificationNotice';
 import { Footer } from './components/Footer';
 import { BookingFormModal } from './components/BookingFormModal';
 import { PackageModal } from './components/PackageModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { AndroidInstallBanner } from './components/AndroidInstallBanner';
 
 import { HomeView } from './views/HomeView';
 import { CabBookingView } from './views/CabBookingView';
@@ -63,6 +65,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 selection:bg-amber-100 selection:text-amber-900 font-sans">
+      {/* 0. Android Mobile App Install Quick Banner */}
+      <AndroidInstallBanner />
+
       {/* 1. Verification Notice Header */}
       <VerificationNotice
         business={business}
@@ -78,7 +83,7 @@ export default function App() {
       />
 
       {/* 3. Main Content Viewport */}
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         {currentTab === 'home' && (
           <HomeView
             business={business}
@@ -149,6 +154,14 @@ export default function App() {
       <Footer
         business={business}
         onSelectTab={setCurrentTab}
+      />
+
+      {/* 6. Native Android Mobile Sticky Bottom Navigation */}
+      <MobileBottomNav
+        currentTab={currentTab}
+        onSelectTab={setCurrentTab}
+        onBookNow={() => handleOpenBooking('oneway')}
+        business={business}
       />
     </div>
   );
