@@ -1,0 +1,6 @@
+{
+  "name": "AIV Travels - Premium Cab & Travel Booking Platform",
+  "description": "Book reliable cab services, airport transfers, outstation trips, and curated holiday travel packages with AIV Travels.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
